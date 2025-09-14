@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4e73df;
+            --secondary: #858796;
+            --success: #1cc88a;
+            --info: #36b9cc;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --light: #f8f9fa;
+            --dark: #5a5c69;
+        }
+        
+        body {
+            font-family: 'Nunito', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--info) 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 25px;
+            border: none;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 15px 20px;
+            font-weight: 700;
+            color: var(--primary);
+            border-radius: 12px 12px 0 0 !important;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .input-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        }
+        
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 15px;
+            border: 1px solid #d1d3e2;
+            margin-bottom: 15px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #3a5fc8 100%);
+            border: none;
+            padding: 12px 25px;
+            font-weight: 600;
+            border-radius: 8px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #3a5fc8 0%, #2e59d9 100%);
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 20px;
+            border-left: 4px solid;
+        }
+        
+        .metric-card.math { border-color: var(--primary); }
+        .metric-card.reading { border-color: var(--info); }
+        .metric-card.writing { border-color: var(--warning); }
+        .metric-card.science { border-color: var(--success); }
+        .metric-card.total { border-color: var(--danger); }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            color: var(--secondary);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        
+        .grade-badge {
+            font-size: 22px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            display: inline-block;
+            margin: 15px 0;
+        }
+        
+        .grade-A { background-color: var(--success); color: white; }
+        .grade-B { background-color: var(--info); color: white; }
+        .grade-C { background-color: var(--warning); color: white; }
+        .grade-D { background-color: #ff9846; color: white; }
+        .grade-Fail { background-color: var(--danger); color: white; }
+        
+        .nav-tabs .nav-link {
+            color: var(--secondary);
+            font-weight: 600;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--primary);
+            background: rgba(78, 115, 223, 0.1);
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .tab-content {
+            padding: 20px 0;
+        }
+        
+        .analysis-text {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .comparison-table th, .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .comparison-table th {
+            background-color: #eaecf4;
+            color: var(--dark);
+            font-weight: 700;
+        }
+        
+        .comparison-table tr:hover {
+            background-color: #f8f9fc;
+        }
+        
+        .performance-bar {
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .performance-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        
+        .fill-math { background: var(--primary); }
+        .fill-reading { background: var(--info); }
+        .fill-writing { background: var(--warning); }
+        .fill-science { background: var(--success); }
+        
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 15px;
+            }
+            
+            .card-body {
+                padding: 15px;
+            }
+            
+            .metric-value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 class="mb-3">Student Performance Dashboard</h1>
+            <p class="lead">Enter your academic scores to receive a personalized performance analysis</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Your Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-section">
+                            <div class="mb-3">
+                                <label class="form-label">Your Name</label>
+                                <input type="text" class="form-control" id="studentName" placeholder="Enter your name">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Gender</label>
+                                <select class="form-control" id="studentGender">
+                                    <option value="">Select gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Math Score</label>
+                                <input type="number" class="form-control" id="mathScore" placeholder="Enter math score (0-100)" min="0" max="100">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Reading Score</label>
+                                <input type="number" class="form-control" id="readingScore" placeholder="Enter reading score (0-100)" min="0" max="100">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Writing Score</label>
+                                <input type="number" class="form-control" id="writingScore" placeholder="Enter writing score (0-100)" min="0" max="100">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Science Score</label>
+                                <input type="number" class="form-control" id="scienceScore" placeholder="Enter science score (0-100)" min="0" max="100">
+                            </div>
+                            
+                            <button id="analyzeBtn" class="btn btn-primary">Analyze My Performance</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>Performance Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="performanceSummary">
+                            <p class="text-center">Enter your scores and click "Analyze" to see your performance summary</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-8">
+                <div id="resultsSection">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Your Academic Performance</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="card metric-card math">
+                                        <div class="metric-value" id="mathScoreValue">-</div>
+                                        <div class="metric-label">Math Score</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card metric-card reading">
+                                        <div class="metric-value" id="readingScoreValue">-</div>
+                                        <div class="metric-label">Reading Score</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card metric-card writing">
+                                        <div class="metric-value" id="writingScoreValue">-</div>
+                                        <div class="metric-label">Writing Score</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <div class="card metric-card science">
+                                        <div class="metric-value" id="scienceScoreValue">-</div>
+                                        <div class="metric-label">Science Score</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <div class="card metric-card total">
+                                        <div class="metric-value" id="totalScoreValue">-</div>
+                                        <div class="metric-label">Total Score</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mt-3">
+                                    <div class="card">
+                                        <div class="metric-value" id="gradeValue">-</div>
+                                        <div class="metric-label">Overall Grade</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">Performance Analysis</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison" type="button" role="tab">Subject Comparison</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" data-bs-target="#recommendations" type="button" role="tab">Recommendations</button>
+                                </li>
+                            </ul>
+                            
+                            <div class="tab-content" id="myTabContent">
+                                <div class="tab-pane fade show active" id="analysis" role="tabpanel">
+                                    <div class="mt-3">
+                                        <h5>Performance Analysis</h5>
+                                        <div class="analysis-text">
+                                            <p id="performanceAnalysis">Enter your scores to see a detailed analysis of your academic performance.</p>
+                                        </div>
+                                        
+                                        <div class="chart-container">
+                                            <canvas id="subjectChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="tab-pane fade" id="comparison" role="tabpanel">
+                                    <div class="mt-3">
+                                        <h5>Subject Comparison</h5>
+                                        <p>Compare your performance across different subjects:</p>
+                                        
+                                        <table class="comparison-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Subject</th>
+                                                    <th>Your Score</th>
+                                                    <th>Class Average</th>
+                                                    <th>Performance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="comparisonTable">
+                                                <tr>
+                                                    <td colspan="4" class="text-center">Enter your scores to see comparison data</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        
+                                        <div class="chart-container">
+                                            <canvas id="comparisonChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="tab-pane fade" id="recommendations" role="tabpanel">
+                                    <div class="mt-3">
+                                        <h5>Personalized Recommendations</h5>
+                                        <div class="analysis-text">
+                                            <p id="recommendationsText">Based on your scores, we'll provide personalized recommendations to help you improve.</p>
+                                        </div>
+                                        
+                                        <h6 class="mt-4">Study Resources</h6>
+                                        <div id="studyResources">
+                                            <p>We'll suggest study resources based on your performance.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            // Score elements
+            const mathScoreEl = document.getElementById('mathScoreValue');
+            const readingScoreEl = document.getElementById('readingScoreValue');
+            const writingScoreEl = document.getElementById('writingScoreValue');
+            const scienceScoreEl = document.getElementById('scienceScoreValue');
+            const totalScoreEl = document.getElementById('totalScoreValue');
+            const gradeEl = document.getElementById('gradeValue');
+            
+            // Analysis elements
+            const performanceAnalysisEl = document.getElementById('performanceAnalysis');
+            const comparisonTableEl = document.getElementById('comparisonTable');
+            const recommendationsTextEl = document.getElementById('recommendationsText');
+            const studyResourcesEl = document.getElementById('studyResources');
+            const performanceSummaryEl = document.getElementById('performanceSummary');
+            
+            // Charts
+            let subjectChart = null;
+            let comparisonChart = null;
+            
+            // Class averages (for comparison)
+            const classAverages = {
+                math: 72,
+                reading: 75,
+                writing: 73,
+                science: 70
+            };
+            
+            // Event listeners
+            analyzeBtn.addEventListener('click', analyzePerformance);
+            
+            function analyzePerformance() {
+                // Get input values
+                const name = document.getElementById('studentName').value.trim();
+                const gender = document.getElementById('studentGender').value;
+                const math = parseFloat(document.getElementById('mathScore').value) || 0;
+                const reading = parseFloat(document.getElementById('readingScore').value) || 0;
+                const writing = parseFloat(document.getElementById('writingScore').value) || 0;
+                const science = parseFloat(document.getElementById('scienceScore').value) || 0;
+                
+                // Validate inputs
+                if (!name || !gender) {
+                    alert('Please enter your name and gender');
+                    return;
+                }
+                
+                if (math === 0 && reading === 0 && writing === 0 && science === 0) {
+                    alert('Please enter at least one score');
+                    return;
+                }
+                
+                // Calculate total score
+                const total = math + reading + writing + science;
+                
+                // Determine grade
+                let grade;
+                let gradeClass;
+                if (total >= 320) {
+                    grade = 'A';
+                    gradeClass = 'grade-A';
+                } else if (total >= 250) {
+                    grade = 'B';
+                    gradeClass = 'grade-B';
+                } else if (total >= 200) {
+                    grade = 'C';
+                    gradeClass = 'grade-C';
+                } else if (total >= 150) {
+                    grade = 'D';
+                    gradeClass = 'grade-D';
+                } else {
+                    grade = 'Fail';
+                    gradeClass = 'grade-Fail';
+                }
+                
+                // Update score displays
+                mathScoreEl.textContent = math;
+                readingScoreEl.textContent = reading;
+                writingScoreEl.textContent = writing;
+                scienceScoreEl.textContent = science;
+                totalScoreEl.textContent = total;
+                gradeEl.textContent = grade;
+                gradeEl.className = 'grade-badge ' + gradeClass;
+                
+                // Update performance summary
+                performanceSummaryEl.innerHTML = `
+                    <h6>Hello, ${name}!</h6>
+                    <p>Your overall performance:</p>
+                    <div class="grade-badge ${gradeClass}">${grade}</div>
+                    <p class="mt-3">Total Score: <strong>${total}/400</strong></p>
+                `;
+                
+                // Generate performance analysis
+                generatePerformanceAnalysis(name, math, reading, writing, science, total, grade);
+                
+                // Generate comparison table
+                generateComparisonTable(math, reading, writing, science);
+                
+                // Generate recommendations
+                generateRecommendations(math, reading, writing, science, grade);
+                
+                // Create charts
+                createSubjectChart(math, reading, writing, science);
+                createComparisonChart(math, reading, writing, science);
+                
+                // Show results section
+                resultsSection.style.display = 'block';
+            }
+            
+            function generatePerformanceAnalysis(name, math, reading, writing, science, total, grade) {
+                let analysis = `<p>Hi <strong>${name}</strong>, here's an analysis of your academic performance:</p>`;
+                
+                analysis += `<p>Your overall grade is <strong>${grade}</strong> with a total score of <strong>${total}/400</strong>.</p>`;
+                
+                // Subject-specific feedback
+                analysis += "<p><strong>Subject-wise Performance:</strong></p><ul>";
+                
+                if (math >= 80) analysis += "<li>Excellent work in <strong>Math</strong>! You've mastered mathematical concepts.</li>";
+                else if (math >= 60) analysis += "<li>Good performance in <strong>Math</strong>. With a little more practice, you can improve further.</li>";
+                else analysis += "<li><strong>Math</strong> needs improvement. Focus on practicing problems regularly.</li>";
+                
+                if (reading >= 80) analysis += "<li>Outstanding performance in <strong>Reading</strong>! Your comprehension skills are excellent.</li>";
+                else if (reading >= 60) analysis += "<li>Solid performance in <strong>Reading</strong>. Try expanding your vocabulary to improve further.</li>";
+                else analysis += "<li><strong>Reading</strong> needs attention. Try reading more diverse materials to improve.</li>";
+                
+                if (writing >= 80) analysis += "<li>Exceptional work in <strong>Writing</strong>! Your expression and clarity are impressive.</li>";
+                else if (writing >= 60) analysis += "<li>Good performance in <strong>Writing</strong>. Practice different writing styles to enhance your skills.</li>";
+                else analysis += "<li><strong>Writing</strong> requires improvement. Focus on grammar and structure practice.</li>";
+                
+                if (science >= 80) analysis += "<li>Brilliant performance in <strong>Science</strong>! Your conceptual understanding is excellent.</li>";
+                else if (science >= 60) analysis += "<li>Good performance in <strong>Science</strong>. Review key concepts to improve your scores.</li>";
+                else analysis += "<li><strong>Science</strong> needs work. Focus on understanding fundamental concepts.</li>";
+                
+                analysis += "</ul>";
+                
+                // Overall feedback
+                if (grade === 'A') analysis += "<p>You're performing at an exceptional level! Keep up the excellent work and consider challenging yourself with advanced materials.</p>";
+                else if (grade === 'B') analysis += "<p>You're doing well academically! With focused effort on your weaker areas, you can reach the top performance level.</p>";
+                else if (grade === 'C') analysis += "<p>You have a solid foundation. Identify your weakest subjects and dedicate regular study time to improve your scores.</p>";
+                else if (grade === 'D') analysis += "<p>There's significant room for improvement. Create a structured study plan and focus on understanding core concepts.</p>";
+                else analysis += "<p>It's important to address academic challenges now. Seek help from teachers or tutors and establish a consistent study routine.</p>";
+                
+                performanceAnalysisEl.innerHTML = analysis;
+            }
+            
+            function generateComparisonTable(math, reading, writing, science) {
+                let tableHTML = '';
+                
+                // Helper function to determine performance status
+                const getPerformance = (score, average) => {
+                    const diff = score - average;
+                    if (diff > 15) return '<span style="color: var(--success);">Excellent</span>';
+                    if (diff > 5) return '<span style="color: var(--info);">Good</span>';
+                    if (diff >= -5) return '<span style="color: var(--warning);">Average</span>';
+                    return '<span style="color: var(--danger);">Needs Improvement</span>';
+                };
+                
+                // Math row
+                tableHTML += `
+                    <tr>
+                        <td>Math</td>
+                        <td>${math}</td>
+                        <td>${classAverages.math}</td>
+                        <td>${getPerformance(math, classAverages.math)}</td>
+                    </tr>
+                `;
+                
+                // Reading row
+                tableHTML += `
+                    <tr>
+                        <td>Reading</td>
+                        <td>${reading}</td>
+                        <td>${classAverages.reading}</td>
+                        <td>${getPerformance(reading, classAverages.reading)}</td>
+                    </tr>
+                `;
+                
+                // Writing row
+                tableHTML += `
+                    <tr>
+                        <td>Writing</td>
+                        <td>${writing}</td>
+                        <td>${classAverages.writing}</td>
+                        <td>${getPerformance(writing, classAverages.writing)}</td>
+                    </tr>
+                `;
+                
+                // Science row
+                tableHTML += `
+                    <tr>
+                        <td>Science</td>
+                        <td>${science}</td>
+                        <td>${classAverages.science}</td>
+                        <td>${getPerformance(science, classAverages.science)}</td>
+                    </tr>
+                `;
+                
+                comparisonTableEl.innerHTML = tableHTML;
+            }
+            
+            function generateRecommendations(math, reading, writing, science, grade) {
+                let recommendations = '<p>Based on your current performance, here are some recommendations:</p><ul>';
+                
+                // Subject-specific recommendations
+                if (math < 70) recommendations += '<li><strong>Math:</strong> Practice daily with problem sets. Focus on areas where you make the most mistakes.</li>';
+                else recommendations += '<li><strong>Math:</strong> Challenge yourself with advanced problems to further enhance your skills.</li>';
+                
+                if (reading < 70) recommendations += '<li><strong>Reading:</strong> Read diverse materials daily. Practice comprehension exercises.</li>';
+                else recommendations += '<li><strong>Reading:</strong> Explore complex texts to further improve your analytical skills.</li>';
+                
+                if (writing < 70) recommendations += '<li><strong>Writing:</strong> Practice different writing styles. Focus on grammar and structure.</li>';
+                else recommendations += '<li><strong>Writing:</strong> Experiment with creative writing to enhance your expression skills.</li>';
+                
+                if (science < 70) recommendations += '<li><strong>Science:</strong> Focus on understanding core concepts. Use visual aids for complex topics.</li>';
+                else recommendations += '<li><strong>Science:</strong> Explore real-world applications of scientific concepts to deepen understanding.</li>';
+                
+                recommendations += '</ul>';
+                
+                // Study resources
+                let resources = '<ul>';
+                resources += '<li><a href="#" class="text-primary">Khan Academy - Math Practice</a></li>';
+                resources += '<li><a href="#" class="text-primary">ReadTheory - Reading Comprehension</a></li>';
+                resources += '<li><a href="#" class="text-primary">Grammarly - Writing Assistance</a></li>';
+                resources += '<li><a href="#" class="text-primary">CK-12 - Science Resources</a></li>';
+                resources += '</ul>';
+                
+                recommendationsTextEl.innerHTML = recommendations;
+                studyResourcesEl.innerHTML = resources;
+            }
+            
+            function createSubjectChart(math, reading, writing, science) {
+                const ctx = document.getElementById('subjectChart').getContext('2d');
+                
+                // Destroy previous chart if it exists
+                if (subjectChart) {
+                    subjectChart.destroy();
+                }
+                
+                subjectChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Math', 'Reading', 'Writing', 'Science'],
+                        datasets: [{
+                            label: 'Your Scores',
+                            data: [math, reading, writing, science],
+                            backgroundColor: [
+                                'rgba(78, 115, 223, 0.7)',
+                                'rgba(54, 185, 204, 0.7)',
+                                'rgba(246, 194, 62, 0.7)',
+                                'rgba(28, 200, 138, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(78, 115, 223, 1)',
+                                'rgba(54, 185, 204, 1)',
+                                'rgba(246, 194, 62, 1)',
+                                'rgba(28, 200, 138, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Your Subject Scores'
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Score'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function createComparisonChart(math, reading, writing, science) {
+                const ctx = document.getElementById('comparisonChart').getContext('2d');
+                
+                // Destroy previous chart if it exists
+                if (comparisonChart) {
+                    comparisonChart.destroy();
+                }
+                
+                comparisonChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Math', 'Reading', 'Writing', 'Science'],
+                        datasets: [
+                            {
+                                label: 'Your Scores',
+                                data: [math, reading, writing, science],
+                                backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                                borderColor: 'rgba(78, 115, 223, 1)',
+                                pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgba(78, 115, 223, 1)'
+                            },
+                            {
+                                label: 'Class Average',
+                                data: [classAverages.math, classAverages.reading, classAverages.writing, classAverages.science],
+                                backgroundColor: 'rgba(200, 200, 200, 0.2)',
+                                borderColor: 'rgba(200, 200, 200, 1)',
+                                pointBackgroundColor: 'rgba(200, 200, 200, 1)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgba(200, 200, 200, 1)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Comparison with Class Average'
+                            }
+                        },
+                        scales: {
+                            r: {
+                                angleLines: {
+                                    display: true
+                                },
+                                suggestedMin: 0,
+                                suggestedMax: 100
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
